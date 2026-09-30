@@ -22,7 +22,11 @@
         "backgroundColor": "#000000"
       },
       "package": "com.emergent.elayaroledispatch.lgrfhi",
-      "permissions": ["CAMERA", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"]
+      "permissions": [
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
     },
     "web": {
       "bundler": "metro",

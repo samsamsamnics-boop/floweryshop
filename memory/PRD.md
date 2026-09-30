@@ -48,6 +48,9 @@ Design and develop ELAYA, a mobile flower marketplace for Biñan, Laguna. Intera
 - Fixed hooks-order bug in owner order detail (proofMut hoisted above early return).
 - Tested: 65/65 backend pytest, all UI flows OK.
 
+## Session (2026-09-30) — Env restore after re-import
+- .env files + node_modules missing again; recreated backend/frontend .env, reinstalled deps, restarted. DB reseeded on startup. Verified login, products, upload, landing render on mobile viewport.
+
 ## Backlog / Remaining
 - P1: Google Maps API key (user will add later) — currently Leaflet-based map UI.
 - P2: Rotate360 skeleton loader on first frame; periodic TEST_* cleanup.
