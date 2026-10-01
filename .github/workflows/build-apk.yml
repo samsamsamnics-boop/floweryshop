@@ -24,9 +24,6 @@ jobs:
           distribution: "temurin"
           java-version: "17"
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -35,11 +32,14 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile || yarn install
 
-      - name: Run Expo Prebuild (Generates Android and Gradle wrapper)
+      - name: Run Expo Prebuild (Generates Android native project and Gradle wrapper)
         run: npx expo prebuild --platform android --clean
 
       - name: Make Gradle Wrapper executable
         run: chmod +x android/gradlew
+
+      - name: Accept Android SDK Licenses
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
       - name: Build Android APK with Gradle Wrapper
         run: |
