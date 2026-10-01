@@ -1,0 +1,74 @@
+name: Release Android APK
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build and Release APK
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile || yarn install
+
+      - name: Run Expo Prebuild
+        run: npx expo prebuild --platform android --clean
+
+      - name: Make Gradle Wrapper executable
+        run: chmod +x android/gradlew
+
+      - name: Build Android Release APK
+        run: |
+          cd android
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Locate and Sign APK if unsigned
+        id: prepare_apk
+        run: |
+          APK_PATH=$(find android/app/build/outputs/apk -name "*.apk" | head -n 1)
+          echo "Found APK at $APK_PATH"
+          if [[ "$APK_PATH" == *"unsigned"* ]]; then
+            echo "Signing unsigned release APK..."
+            BUILD_TOOLS_DIR=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -n 1)
+            $BUILD_TOOLS_DIR/zipalign -v -p 4 "$APK_PATH" android/app/build/outputs/apk/aligned.apk
+            keytool -genkeypair -v -keystore release.jks -alias release -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Release, OU=App, O=App, L=City, S=State, C=US"
+            $BUILD_TOOLS_DIR/apksigner sign --ks release.jks --ks-pass pass:android --key-pass pass:android --out android/app/build/outputs/apk/floweryshop-release.apk android/app/build/outputs/apk/aligned.apk
+          else
+            cp "$APK_PATH" android/app/build/outputs/apk/floweryshop-release.apk
+          fi
+          echo "apk_file=frontend/android/app/build/outputs/apk/floweryshop-release.apk" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release and Attach APK
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.prepare_apk.outputs.apk_file }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false
